@@ -1,150 +1,145 @@
-# Contact Hash Table
-This project implements a contact management system using a custom-built hash table in Python. Instead of using Python’s built-in dictionary, you’ll define a hash table from scratch that stores and retrieves `Contact` objects based on a user’s name.
+class Contact:
+    '''
+    Contact class to represent a contact with a name and number.
+    Attributes:
+        name (str): The name of the contact.
+        number (str): The phone number of the contact.
+    '''
+    
+    def __init__(self, name: str, number: str):
+        self.name = name
+        self.number = number
 
-The system uses separate chaining to handle hash collisions, meaning each array index contains a linked list of contacts that share the same hash value. This assignment deepens your understanding of how hash tables work behind the scenes and how to resolve collisions—a key concept for systems that rely on fast lookups like databases, caches, and contact directories.
+    def __str__(self) -> str:
+        return f"{self.name}: {self.number}"
 
-## Features
-- Insert new contacts by name and number
-- Automatically update a contact’s number if the name already exists
-- Handle collisions using linked lists
-- Search for contacts by name
-- Print the entire hash table, including all chained contacts
 
-## Classes
+class Node:
+    '''
+    Node class to represent a single entry in the hash table.
+    Attributes:
+        key (str): The key (name) of the contact.
+        value (Contact): The value (Contact object) associated with the key.
+        next (Node): Pointer to the next node in case of a collision.
+    '''
+   
+    def __init__(self, key: str, value: Contact):
+        self.key = key
+        self.value = value
+        self.next = None
 
-### `Contact` Class
-Represents a single contact with a name and phone number.
 
-**Constructor**
+class HashTable:
+    '''
+    HashTable class to represent a hash table for storing contacts.
+    Attributes:
+        size (int): The size of the hash table.
+        data (list): The underlying array to store linked lists for collision handling.
+    Methods:
+        hash_function(key): Converts a string key into an array index.
+        insert(key, value): Inserts a new contact into the hash table.
+        search(key): Searches for a contact by name.
+        print_table(): Prints the structure of the hash table.
+    '''
+    
+    def __init__(self, size: int = 10):
+        self.size = size
+        self.data = [None] * size
 
-```python
-Contact(name: str, number: str)
-```
+    def hash_function(self, key: str) -> int:
+        '''
+        Converts a string key into an index using character values.
+        '''
+        hash_value = 0
+        for char in key:
+            hash_value += ord(char)
+        return hash_value % self.size
 
-**Attributes**
-- `name` (str): The contact's name
-- `number` (str): The contact's phone number (e.g. `"123-456-7890"`)
+    def insert(self, key: str, value: str):
+        '''
+        Inserts a new contact into the hash table.
+        If the key already exists, updates the contact's number.
+        '''
+        index = self.hash_function(key)
 
-**Methods**
-- `__str__() -> str`: Returns the contact in the format `"[CONTACT_NAME]: [CONTACT_NUMBER]"`
+        new_contact = Contact(key, value)
+        new_node = Node(key, new_contact)
 
-**Example Usage**
-```python
-contact_1 = Contact("Riley", "123-456-7890")
-print(contact_1.name) # Riley
-print(contact_1.number) # 123-456-7890 
-print(contact_1) # Riley: 123-456-7890 
-```
+        # If bucket is empty
+        if self.data[index] is None:
+            self.data[index] = new_node
+            return
 
-### `Node` Class
-Represents a node in a linked list used to resolve hash collisions.
+        # Traverse linked list for collision handling
+        current = self.data[index]
+        while current:
+            # Update duplicate key
+            if current.key == key:
+                current.value.number = value
+                return
+            if current.next is None:
+                break
+            current = current.next
 
-**Constructor**
-```python
-Node(key: str, value: Contact)
-```
+        # Append new node at end
+        current.next = new_node
 
-**Attributes**
-- `key` (str): The key associated with the contact (typically the contact’s name)
-- `value` (Contact): The `Contact` object stored at this node
-- `next` (Node or None): Pointer to the next node in the list (default is `None`)
+    def search(self, key: str):
+        '''
+        Searches for a contact by name.
+        Returns the Contact object if found, otherwise None.
+        '''
+        index = self.hash_function(key)
+        current = self.data[index]
 
-**Example Usage**
-```python
-contact_1 = Contact("Riley", "123-456-7890")
-node_1 = Node(contact_1.name, contact_1)
-print(node_1.key) # Riley 
-print(node_1.value) # Riley: 123-456-7890 
-print(node_1.next) # None 
-```
+        while current:
+            if current.key == key:
+                return current.value
+            current = current.next
 
-### `HashTable` Class
-Implements a hash table with separate chaining to store and retrieve contacts.
+        return None
 
-**Constructor**
+    def print_table(self):
+        '''
+        Prints the structure of the hash table.
+        '''
+        for i in range(self.size):
+            print(f"Index {i}:", end=" ")
 
-```python
-HashTable(size: int)
-```
+            current = self.data[i]
+            if current is None:
+                print("Empty")
+            else:
+                while current:
+                    print(f"- {current.value}", end=" ")
+                    current = current.next
+                print()
 
-**Attributes**
-- `size` (int): The number of slots in the underlying array
-- `data` (list of Node or None): The array itself; each element is either `None` or a linked list of `Node` objects
 
-**Methods**
-- `hash_function(key: str) -> int`: Computes a hash value for the given key (e.g., using `ord()` values)
-- `insert(key: str, number: str) -> None`: Creates a new `Contact` object and adds it to the table. If a contact with the same name already exists, updates the number.
-- `search(key: str) -> Contact or None`: Searches for a contact by name and returns the `Contact` object if found. If no contact is found to match the `key`, then `None` is returned.
-- `print_table() -> None`: Prints each index of the hash table and all contacts stored at that index.
+# Test your hash table implementation here.
+if __name__ == "__main__":
+    table = HashTable(10)
 
-**Example Usage**
-```python
-table = HashTable(10)
-table.print_table()
-'''
-Index 0: Empty
-Index 1: Empty
-Index 2: Empty
-Index 3: Empty
-Index 4: Empty
-Index 5: Empty
-Index 6: Empty
-Index 7: Empty
-Index 8: Empty
-Index 9: Empty 
-'''
-# Add some values
-table.insert("John", "909-876-1234")
-table.insert("Rebecca", "111-555-0002")
-# Print the new table structure 
-table.print_table()
-'''
-Index 0: Empty
-Index 1: Empty
-Index 2: Empty
-Index 3: Empty
-Index 4: Empty
-Index 5: Empty
-Index 6: Empty
-Index 7: - Rebecca: 111-555-0002 
-Index 8: Empty
-Index 9: - John: 909-876-1234 
-'''
-# Search for a value
-contact = table.search("John") 
-print("\nSearch result:", contact)  # Search result: John: 909-876-1234 
+    print("Initial Table:")
+    table.print_table()
 
-# Edge Case #1 - Hash Collisons (assuming these hash to the same index) 
-table.insert("Amy", "111-222-3333") 
-table.insert("May", "222-333-1111")  # May collide with Amy depending on hash function 
-table.print_table()
-'''
-Index 0: Empty
-Index 1: Empty
-Index 2: Empty
-Index 3: Empty
-Index 4: Empty
-Index 5: - Amy: 111-222-3333 - May: 222-333-1111 
-Index 6: Empty
-Index 7: - Rebecca: 111-555-0002 
-Index 8: Empty
-Index 9: - John: 909-876-1234 
-'''
-# Edge Case #2 - Duplicate Keys 
-table.insert("Rebecca", "999-444-9999")  # Should update Rebecca's number 
-table.print_table()
-'''
-Index 0: Empty
-Index 1: Empty
-Index 2: Empty
-Index 3: Empty
-Index 4: Empty
-Index 5: - Amy: 111-222-3333 - May: 222-333-1111 
-Index 6: Empty
-Index 7: - Rebecca: 999-444-9999 
-Index 8: Empty
-Index 9: - John: 909-876-1234 
-'''
-# Edge Case #3 - Searching for a value not in the table
-print(table.search("Chris")) # None
-```
+    print("\nAdding Contacts:")
+    table.insert("John", "909-876-1234")
+    table.insert("Rebecca", "111-555-0002")
+    table.print_table()
+
+    print("\nSearching for John:")
+    contact = table.search("John")
+    print("Search result:", contact)
+
+    print("\nTesting Collisions:")
+    table.insert("Amy", "111-222-3333")
+    table.insert("May", "222-333-1111")
+    table.print_table()
+
+    print("\nUpdating Rebecca:")
+    table.insert("Rebecca", "999-444-9999")
+    table.print_table()
+
+    print("\nSearching for Missing Contact:")
+    print(table.search("Chris"))
